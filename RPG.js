@@ -1,7 +1,7 @@
 var map;    
 
 function initialize() {
-	setInterval(draw,1000/30);
+	setInterval(draw,1000/5);
 	// do more initialization
 
 	map = new Map();
@@ -12,7 +12,8 @@ function initialize() {
 	};
 	var perlin = new Perlin(40,40,5,noisefn);
 	perlin.generate();
-	map.setGrid(perlin.pixvals);		
+	map.initGrid(40,40);
+	map.setTerrain(perlin.pixvals);		
 }
 
 function draw() {

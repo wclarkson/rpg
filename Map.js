@@ -1,5 +1,6 @@
 function Map(w,h) {
-	this.grid = [];
+	this.terrain = [];
+	this.vis = [];
 	this.px = 20;
 	this.py = 20;
 	// initialize things here	
@@ -23,21 +24,43 @@ Map.prototype.movePlayer = function(dir) {
 };
 
 Map.prototype.initGrid = function(width,height,value) {
-	console.log(typeof(value));
 	this.width = width;
 	this.height = height;
 	for (var i=0;i<this.width;i++) {
-		this.grid[i] = [];
+		this.terrain[i] = [];
+		this.vis[i] = [];
 		for (var j=0;j<this.height;j++) {
-			this.grid[i][j] = value;
+			this.terrain[i][j] = value;
+			this.vis[i][j] = 0;
 		}
 	}
 };
 
-Map.prototype.setGrid = function(grid) {
-	this.grid = grid;
+Map.prototype.setTerrain = function(grid) {
+	this.terrain = grid;
 	this.width = grid.length;
 	this.height = grid[0].length;
+};
+
+Map.prototype.setVis = function(vis) {
+	this.vis = vis;
+	this.width = vis.length;
+	this.height = grid[0].length;
+};
+
+Map.prototype.updateVis = function() {
+	var rad = 4;
+	var xmin = (this.px-rad<0) ? 0 : this.px-rad;
+	var xmax = (this.px+rad>=this.width) ? this.width : this.px+rad;
+	var ymin = (this.py-rad<0) ? 0 : this.py-rad;
+	var ymax = (this.py+rad);
+	for (var i=xmin;i<xmax;i++) {
+		for (var j=ymin;j<ymax;j++) {
+			if ((Math.pow(i-this.px,2)+Math.pow(j-this.py,2))<Math.pow(rad,2)) {
+				this.vis[i][j] = 1;
+			}
+		}
+	}
 };
 
 Map.prototype.generate = function() {
@@ -45,14 +68,15 @@ Map.prototype.generate = function() {
 };
 
 Map.prototype.draw = function(context,scale) {
+	this.updateVis();
 	var camx = this.px;
 	var camy = this.py;
+	var rad = 4;
 	var cw = 15;
 	var ch = 15;
 	var block = scale;
 	if (camx<Math.ceil(cw/2)) camx = Math.floor(cw/2);
 	if (camx>Math.ceil(this.width-cw/2)) camx = Math.ceil(this.width-cw/2);
-	
 	if (camy<Math.floor(ch/2+1)) camy = Math.floor(ch/2+1);
 	if (camy>Math.ceil(this.height-ch/2+1)) camy = Math.ceil(this.height-ch/2+1);
 	
@@ -62,11 +86,23 @@ Map.prototype.draw = function(context,scale) {
 	var xmax = Math.floor(camx+cw/2);
 	var ymin = Math.ceil(camy-ch/2);
 	var ymax = Math.floor(camy+ch/2);
+	xmin = 0;
+	xmax = this.width;
+	ymin = 0;
+	ymax = this.height + 1;
 	for (var i=xmin;i<xmax;i++) {
 		for (var j=ymin;j<ymax;j++) {
-			col = Math.floor(this.grid[i][j]*255);
+			col = Math.floor(this.terrain[i][j]*255);
 			context.beginPath();
-			context.fillStyle = "rgb(0," + String(col) + ",0)";
+			if (this.vis[i][j]==1) {
+				if ((Math.pow(i-this.px,2)+Math.pow(j-this.py,2))<Math.pow(rad,2)) {
+					context.fillStyle = "rgb(0," + String(col) + ",0)";
+				} else {
+					context.fillStyle = "rgb(60," + Math.floor(String(col)*0.4) + ",60)";
+				}
+			} else {
+				context.fillStyle = "rgb(0,0,0)";
+			}
 			context.rect(scale*i,context.canvas.height-scale*j,scale,scale);
 			context.fill();
 		}
